@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Noble Family Shopping List</title>
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#0d1117"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Noble Shop"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,900;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2331;
+      --border: rgba(255,255,255,0.07);
+      --accent: #e8c97e;
+      --accent2: #7ecbb5;
+      --text: #f0ece3;
+      --muted: #8b9197;
+      --danger: #e87e7e;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── BACKGROUND ── */
+    .bg-orbs {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    }
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: 0.18;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 520px; height: 520px; background: #e8c97e; top: -180px; left: -120px; animation-duration: 20s; }
+    .orb2 { width: 400px; height: 400px; background: #7ecbb5; bottom: -100px; right: -100px; animation-duration: 25s; }
+    .orb3 { width: 280px; height: 280px; background: #a57ee8; top: 40%; left: 55%; animation-duration: 15s; }
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 40px) scale(1.08); }
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      position: relative; z-index: 1;
+      max-width: 760px; margin: 0 auto;
+      padding: 0 20px 120px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      text-align: center;
+      padding: 56px 0 40px;
+      animation: fadeDown 0.8s ease both;
+    }
+    .header-tag {
+      display: inline-block;
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--accent2); border: 1px solid var(--accent2);
+      border-radius: 40px; padding: 5px 16px; margin-bottom: 20px;
+    }
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2.4rem, 7vw, 4rem);
+      font-weight: 900; line-height: 1.05;
+      color: var(--text);
+    }
+    h1 em { font-style: italic; color: var(--accent); }
+    .subtitle {
+      margin-top: 12px; color: var(--muted); font-size: 0.95rem; font-weight: 300;
+    }
+
+    /* ── SEARCH ── */
+    .search-wrap {
+      position: relative; margin-bottom: 32px;
+      animation: fadeUp 0.8s 0.15s ease both;
+    }
+    .search-icon {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font-size: 1rem; pointer-events: none;
+    }
+    #search {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 16px 14px 44px;
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #search::placeholder { color: var(--muted); }
+    #search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(232,201,126,0.12);
+    }
+
+    /* ── CATEGORY TABS ── */
+    .tabs {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 28px;
+      animation: fadeUp 0.8s 0.25s ease both;
+    }
+    .tab {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 30px; padding: 7px 16px;
+      font-size: 0.82rem; font-weight: 500; cursor: pointer;
+      transition: all 0.2s; color: var(--muted); white-space: nowrap;
+      user-select: none;
+    }
+    .tab:hover { border-color: var(--accent); color: var(--accent); }
+    .tab.active {
+      background: var(--accent); color: #0d1117;
+      border-color: var(--accent); font-weight: 600;
+    }
+
+    /* ── CATEGORY SECTION ── */
+    .category-section {
+      margin-bottom: 32px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .cat-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .cat-icon { font-size: 1.2rem; }
+    .cat-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1.05rem; font-weight: 600; color: var(--text);
+    }
+    .cat-line {
+      flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── FOOD GRID ── */
+    .food-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .food-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 12px;
+      cursor: pointer;
+      transition: transform 0.18s, border-color 0.18s, background 0.18s, box-shadow 0.18s;
+      position: relative; overflow: hidden;
+      user-select: none;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      text-align: center;
+    }
+    .food-card::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 60% 30%, rgba(232,201,126,0.08), transparent 70%);
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .food-card:hover { transform: translateY(-3px); border-color: rgba(232,201,126,0.3); }
+    .food-card:hover::after { opacity: 1; }
+    .food-card.selected {
+      border-color: var(--accent);
+      background: rgba(232,201,126,0.1);
+      box-shadow: 0 0 0 1px var(--accent), 0 4px 20px rgba(232,201,126,0.15);
+    }
+    .food-card.selected .check {
+      opacity: 1; transform: scale(1);
+    }
+    .food-emoji { font-size: 1.9rem; line-height: 1; }
+    .food-name { font-size: 0.8rem; color: var(--muted); font-weight: 400; line-height: 1.3; }
+    .food-card.selected .food-name { color: var(--accent); }
+    .check {
+      position: absolute; top: 8px; right: 8px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--accent); color: #0d1117;
+      font-size: 10px; display: grid; place-items: center;
+      opacity: 0; transform: scale(0.4);
+      transition: opacity 0.2s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      font-weight: 700;
+    }
+    .food-card.hidden { display: none; }
+
+    /* ── BASKET BAR ── */
+    .basket-bar {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(120px);
+      z-index: 100; width: calc(100% - 40px); max-width: 720px;
+      transition: transform 0.45s cubic-bezier(0.34,1.3,0.64,1);
+    }
+    .basket-bar.visible { transform: translateX(-50%) translateY(0); }
+
+    .basket-inner {
+      background: var(--surface2);
+      border: 1px solid rgba(232,201,126,0.25);
+      border-radius: 20px;
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+      backdrop-filter: blur(12px);
+    }
+    .basket-count {
+      background: var(--accent); color: #0d1117;
+      border-radius: 50%; width: 36px; height: 36px;
+      display: grid; place-items: center;
+      font-size: 0.95rem; font-weight: 700; flex-shrink: 0;
+    }
+    .basket-preview {
+      flex: 1; font-size: 0.82rem; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .basket-preview strong { color: var(--text); font-weight: 500; }
+
+    .send-btn {
+      background: var(--accent); color: #0d1117;
+      border: none; border-radius: 12px;
+      padding: 10px 20px; font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .send-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 4px 18px rgba(232,201,126,0.35);
+    }
+    .send-btn:active { transform: scale(0.97); }
+    .clear-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 10px;
+      padding: 8px 13px; font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem; cursor: pointer; flex-shrink: 0;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .clear-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      display: grid; place-items: center; padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface2);
+      border: 1px solid rgba(232,201,126,0.2);
+      border-radius: 24px; padding: 32px 28px;
+      max-width: 480px; width: 100%;
+      transform: translateY(24px) scale(0.97);
+      transition: transform 0.35s cubic-bezier(0.34,1.3,0.64,1);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+    .modal-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .modal h2 {
+      font-family: 'Fraunces', serif; font-size: 1.6rem;
+      font-weight: 700; margin-bottom: 8px;
+    }
+    .modal p { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.6; }
+
+    .selected-list {
+      background: var(--surface);
+      border-radius: 14px; padding: 14px 16px;
+      margin-bottom: 22px; max-height: 180px; overflow-y: auto;
+    }
+    .selected-list::-webkit-scrollbar { width: 4px; }
+    .selected-list::-webkit-scrollbar-track { background: transparent; }
+    .selected-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .list-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.88rem; padding: 4px 0;
+      border-bottom: 1px solid var(--border); color: var(--text);
+    }
+    .list-item:last-child { border-bottom: none; }
+
+    .recipients {
+      display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;
+    }
+    .recipient {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface); border-radius: 10px; padding: 10px 14px;
+      font-size: 0.85rem; color: var(--muted);
+    }
+    .recipient-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
+
+    .modal-actions { display: flex; gap: 10px; }
+    .btn-cancel {
+      flex: 1; background: none; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 12px; padding: 12px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+    .btn-confirm {
+      flex: 2; background: var(--accent); color: #0d1117;
+      border: none; border-radius: 12px; padding: 12px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-confirm:hover { transform: scale(1.02); box-shadow: 0 4px 18px rgba(232,201,126,0.3); }
+
+    /* ── SUCCESS TOAST ── */
+    .toast {
+      position: fixed; top: 24px; right: 24px; z-index: 300;
+      background: var(--surface2);
+      border: 1px solid var(--accent2);
+      border-radius: 14px; padding: 14px 20px;
+      font-size: 0.88rem; color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: translateX(130%);
+      transition: transform 0.4s cubic-bezier(0.34,1.3,0.64,1);
+    }
+    .toast.show { transform: translateX(0); }
+    .toast-icon { font-size: 1.2rem; }
+
+    /* ── CUSTOM ITEM ── */
+    .custom-section {
+      margin-bottom: 36px;
+      animation: fadeUp 0.8s 0.35s ease both;
+    }
+    .custom-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+    .custom-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1.05rem; font-weight: 600; color: var(--text);
+    }
+    .custom-line { flex: 1; height: 1px; background: var(--border); }
+
+    .custom-input-row {
+      display: flex; gap: 10px;
+    }
+    .custom-input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 13px 16px;
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .custom-input::placeholder { color: var(--muted); }
+    .custom-input:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(126,203,181,0.12);
+    }
+    .custom-add-btn {
+      background: var(--accent2); color: #0d1117;
+      border: none; border-radius: 14px; padding: 13px 20px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .custom-add-btn:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(126,203,181,0.3); }
+    .custom-add-btn:active { transform: scale(0.97); }
+
+    .custom-tags {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+    }
+    .custom-tag {
+      background: rgba(126,203,181,0.12);
+      border: 1px solid rgba(126,203,181,0.35);
+      border-radius: 30px; padding: 6px 14px;
+      font-size: 0.82rem; color: var(--accent2);
+      display: flex; align-items: center; gap: 8px;
+      animation: popIn 0.25s ease both;
+    }
+    .custom-tag-remove {
+      background: none; border: none; cursor: pointer;
+      color: var(--accent2); opacity: 0.6; font-size: 1rem; line-height: 1;
+      padding: 0; transition: opacity 0.2s, transform 0.2s;
+    }
+    .custom-tag-remove:hover { opacity: 1; transform: scale(1.2); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 48px 20px; color: var(--muted);
+      display: none;
+    }
+    .empty-state.visible { display: block; }
+    .empty-state p { font-size: 0.95rem; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .food-card { animation: popIn 0.3s ease both; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 500px) {
+      .food-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+      .basket-inner { flex-wrap: wrap; }
+      .basket-preview { width: 100%; order: -1; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<div class="container">
+  <header>
+    <div class="header-tag">Weekly Planner</div>
+    <h1>Noble Family<br><em>Shopping List</em></h1>
+    <p class="subtitle">Pick what you need · Send it straight to the family</p>
+  </header>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search" placeholder="Search foods…" autocomplete="off"/>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <!-- Custom Item Input -->
+  <div class="custom-section">
+    <div class="custom-header">
+      <span class="cat-icon">✏️</span>
+      <span class="custom-title">Add Custom Item</span>
+      <div class="custom-line"></div>
+    </div>
+    <div class="custom-input-row">
+      <input class="custom-input" id="custom-input" type="text" placeholder="e.g. Protein bars, Sparkling water…" maxlength="60" autocomplete="off"/>
+      <button class="custom-add-btn" id="custom-add-btn">＋ Add</button>
+    </div>
+    <div class="custom-tags" id="custom-tags"></div>
+  </div>
+
+  <div id="food-sections"></div>
+  <div class="empty-state" id="empty-state"><p>No items found for your search.</p></div>
+</div>
+
+<!-- Basket Bar -->
+<div class="basket-bar" id="basket-bar">
+  <div class="basket-inner">
+    <div class="basket-count" id="basket-count">0</div>
+    <div class="basket-preview" id="basket-preview">Nothing selected yet</div>
+    <button class="clear-btn" id="clear-btn">Clear</button>
+    <button class="send-btn" id="send-btn">
+      <span>📧</span> Send List
+    </button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon">🛒</div>
+    <h2>Send Shopping List</h2>
+    <p>Your list will be emailed to both recipients below.</p>
+    <div class="selected-list" id="modal-list"></div>
+    <div class="recipients">
+      <div class="recipient"><div class="recipient-dot"></div> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6108180413080f1200031421060c00080d4f020e0c">[email&#160;protected]</a></div>
+      <div class="recipient"><div class="recipient-dot"></div> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a4cac5d1c8d0cbcae4c3c9c5cdc88ac7cbc9">[email&#160;protected]</a></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">Cancel</button>
+      <button class="btn-confirm" id="modal-confirm">✉️ &nbsp;Send via Email</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✅</span>
+  <span>Email app opened! List ready to send.</span>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+const FOODS = [
+  { cat: "🥩 Meat & Fish", items: [
+    { e:"🥩", n:"Beef Mince" }, { e:"🍗", n:"Chicken Breast" }, { e:"🥓", n:"Bacon" },
+    { e:"🐟", n:"Salmon" }, { e:"🦐", n:"Prawns" }, { e:"🍖", n:"Pork Chops" },
+    { e:"🥚", n:"Eggs" }, { e:"🌭", n:"Sausages" }, { e:"🍗", n:"Chicken Thighs" },
+    { e:"🐟", n:"Cod Fillets" }, { e:"🦞", n:"Tuna (can)" }, { e:"🥩", n:"Lamb Chops" }
+  ]},
+  { cat: "🥛 Dairy", items: [
+    { e:"🥛", n:"Milk" }, { e:"🧀", n:"Cheddar" }, { e:"🧈", n:"Butter" },
+    { e:"🍦", n:"Yogurt" }, { e:"🧀", n:"Mozzarella" }, { e:"🥛", n:"Cream" },
+    { e:"🧀", n:"Parmesan" }, { e:"🍦", n:"Greek Yogurt" }, { e:"🥛", n:"Oat Milk" }
+  ]},
+  { cat: "🥦 Vegetables", items: [
+    { e:"🥦", n:"Broccoli" }, { e:"🥕", n:"Carrots" }, { e:"🥬", n:"Spinach" },
+    { e:"🧅", n:"Onions" }, { e:"🧄", n:"Garlic" }, { e:"🍅", n:"Tomatoes" },
+    { e:"🥒", n:"Cucumber" }, { e:"🫑", n:"Bell Peppers" }, { e:"🥔", n:"Potatoes" },
+    { e:"🍆", n:"Aubergine" }, { e:"🌽", n:"Sweetcorn" }, { e:"🥗", n:"Mixed Salad" },
+    { e:"🫒", n:"Avocado" }, { e:"🍄", n:"Mushrooms" }, { e:"🥬", n:"Courgette" }
+  ]},
+  { cat: "🍎 Fruit", items: [
+    { e:"🍎", n:"Apples" }, { e:"🍌", n:"Bananas" }, { e:"🍊", n:"Oranges" },
+    { e:"🍇", n:"Grapes" }, { e:"🍓", n:"Strawberries" }, { e:"🍋", n:"Lemons" },
+    { e:"🍑", n:"Peaches" }, { e:"🫐", n:"Blueberries" }, { e:"🍍", n:"Pineapple" },
+    { e:"🥝", n:"Kiwi" }, { e:"🍐", n:"Pears" }, { e:"🍒", n:"Cherries" }
+  ]},
+  { cat: "🍞 Bread & Bakery", items: [
+    { e:"🍞", n:"White Bread" }, { e:"🫓", n:"Brown Bread" }, { e:"🥐", n:"Croissants" },
+    { e:"🥖", n:"Baguette" }, { e:"🫓", n:"Sourdough" }, { e:"🥯", n:"Bagels" },
+    { e:"🥞", n:"Wraps" }, { e:"🍞", n:"Pitta Bread" }
+  ]},
+  { cat: "🥫 Pantry", items: [
+    { e:"🥫", n:"Baked Beans" }, { e:"🍝", n:"Pasta" }, { e:"🍚", n:"Rice" },
+    { e:"🥫", n:"Chopped Tomatoes" }, { e:"🫙", n:"Olive Oil" }, { e:"🧂", n:"Salt" },
+    { e:"🫙", n:"Soy Sauce" }, { e:"🍯", n:"Honey" }, { e:"🥣", n:"Oats" },
+    { e:"🫙", n:"Peanut Butter" }, { e:"🥫", n:"Chickpeas" }, { e:"🍜", n:"Noodles" },
+    { e:"🫙", n:"Stock Cubes" }, { e:"🌶️", n:"Chilli Flakes" }, { e:"🫙", n:"Coconut Milk" }
+  ]},
+  { cat: "🥤 Drinks", items: [
+    { e:"☕", n:"Coffee" }, { e:"🍵", n:"Tea Bags" }, { e:"🧃", n:"Orange Juice" },
+    { e:"💧", n:"Sparkling Water" }, { e:"🥤", n:"Squash" }, { e:"🍺", n:"Beer" },
+    { e:"🍷", n:"Wine" }, { e:"🧋", n:"Smoothie" }
+  ]},
+  { cat: "🧴 Household", items: [
+    { e:"🧴", n:"Washing Up Liquid" }, { e:"🧻", n:"Toilet Roll" }, { e:"🫧", n:"Laundry Tabs" },
+    { e:"🧽", n:"Sponges" }, { e:"🗑️", n:"Bin Bags" }, { e:"🧴", n:"Shampoo" },
+    { e:"🪥", n:"Toothpaste" }, { e:"🧼", n:"Hand Soap" }
+  ]}
+];
+
+let selected = new Set();
+let activeCategory = "All";
+let searchQ = "";
+
+// Build tabs
+const tabsEl = document.getElementById("tabs");
+const allCats = ["All", ...FOODS.map(f => f.cat)];
+allCats.forEach(cat => {
+  const t = document.createElement("button");
+  t.className = "tab" + (cat === "All" ? " active" : "");
+  t.textContent = cat;
+  t.addEventListener("click", () => {
+    activeCategory = cat;
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    renderFoods();
+  });
+  tabsEl.appendChild(t);
+});
+
+function renderFoods() {
+  const sections = document.getElementById("food-sections");
+  sections.innerHTML = "";
+  let total = 0;
+
+  FOODS.forEach((catObj, ci) => {
+    if (activeCategory !== "All" && catObj.cat !== activeCategory) return;
+    const filtered = catObj.items.filter(it =>
+      it.n.toLowerCase().includes(searchQ.toLowerCase())
+    );
+    if (!filtered.length) return;
+    total += filtered.length;
+
+    const sec = document.createElement("div");
+    sec.className = "category-section";
+    sec.style.animationDelay = (ci * 0.05) + "s";
+
+    sec.innerHTML = `
+      <div class="cat-header">
+        <span class="cat-icon">${catObj.cat.split(" ")[0]}</span>
+        <span class="cat-title">${catObj.cat.split(" ").slice(1).join(" ")}</span>
+        <div class="cat-line"></div>
+      </div>
+      <div class="food-grid" id="grid-${ci}"></div>
+    `;
+    sections.appendChild(sec);
+
+    const grid = sec.querySelector(".food-grid");
+    filtered.forEach((item, ii) => {
+      const id = `${catObj.cat}::${item.n}`;
+      const card = document.createElement("div");
+      card.className = "food-card" + (selected.has(id) ? " selected" : "");
+      card.style.animationDelay = (ii * 0.04) + "s";
+      card.innerHTML = `
+        <div class="check">✓</div>
+        <div class="food-emoji">${item.e}</div>
+        <div class="food-name">${item.n}</div>
+      `;
+      card.addEventListener("click", () => toggleItem(id, card));
+      grid.appendChild(card);
+    });
+  });
+
+  document.getElementById("empty-state").classList.toggle("visible", total === 0);
+}
+
+function toggleItem(id, card) {
+  if (selected.has(id)) {
+    selected.delete(id);
+    card.classList.remove("selected");
+  } else {
+    selected.add(id);
+    card.classList.add("selected");
+    card.animate([
+      { transform: "scale(1)" },
+      { transform: "scale(1.07)" },
+      { transform: "scale(1)" }
+    ], { duration: 250, easing: "ease" });
+  }
+  updateBasket();
+}
+
+function updateBasket() {
+  const bar = document.getElementById("basket-bar");
+  const count = document.getElementById("basket-count");
+  const preview = document.getElementById("basket-preview");
+
+  const total = selected.size + customItems.length;
+  count.textContent = total;
+  if (total === 0) {
+    bar.classList.remove("visible");
+  } else {
+    bar.classList.add("visible");
+    const names = [...selected].map(id => id.split("::")[1]).concat(customItems);
+    const preview3 = names.slice(0, 3).join(", ");
+    const more = names.length > 3 ? ` +${names.length - 3} more` : "";
+    preview.innerHTML = `<strong>${names.length} item${names.length > 1 ? "s" : ""}</strong>: ${preview3}${more}`;
+  }
+}
+
+// Search
+document.getElementById("search").addEventListener("input", e => {
+  searchQ = e.target.value;
+  renderFoods();
+});
+
+// Clear
+document.getElementById("clear-btn").addEventListener("click", () => {
+  selected.clear();
+  customItems = [];
+  renderCustomTags();
+  renderFoods();
+  updateBasket();
+});
+
+// Send
+document.getElementById("send-btn").addEventListener("click", openModal);
+
+function openModal() {
+  const names = [...selected].map(id => {
+    const [cat, name] = id.split("::");
+    const catObj = FOODS.find(f => f.cat === cat);
+    const item = catObj?.items.find(it => it.n === name);
+    return { e: item?.e || "•", n: name };
+  });
+  const customEntries = customItems.map(n => ({ e: "✏️", n }));
+  const all = [...names, ...customEntries];
+
+  const list = document.getElementById("modal-list");
+  list.innerHTML = all.map(it => `
+    <div class="list-item">
+      <span>${it.e}</span><span>${it.n}</span>
+    </div>
+  `).join("");
+
+  document.getElementById("modal").classList.add("open");
+}
+
+document.getElementById("modal-cancel").addEventListener("click", () => {
+  document.getElementById("modal").classList.remove("open");
+});
+document.getElementById("modal").addEventListener("click", e => {
+  if (e.target === document.getElementById("modal")) {
+    document.getElementById("modal").classList.remove("open");
+  }
+});
+
+document.getElementById("modal-confirm").addEventListener("click", () => {
+  const names = [...selected].map(id => id.split("::")[1]).concat(customItems);
+  const body = encodeURIComponent(
+    "Hi! 👋\n\nHere's the Noble Family weekly shopping list:\n\n" +
+    names.map((n, i) => `${i + 1}. ${n}`).join("\n") +
+    "\n\nSent from Noble Family Shopping List 🛒"
+  );
+  const subject = encodeURIComponent("🛒 Noble Family Weekly Shopping List");
+  const to = "iyerinsabu@gmail.com,naulton@gmail.com";
+  window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+
+  document.getElementById("modal").classList.remove("open");
+  showToast();
+});
+
+function showToast() {
+  const toast = document.getElementById("toast");
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 3500);
+}
+
+// ── CUSTOM ITEMS ──
+let customItems = [];
+
+const customInput = document.getElementById("custom-input");
+const customAddBtn = document.getElementById("custom-add-btn");
+const customTagsEl = document.getElementById("custom-tags");
+
+function addCustomItem() {
+  const val = customInput.value.trim();
+  if (!val || customItems.includes(val)) { customInput.focus(); return; }
+  customItems.push(val);
+  customInput.value = "";
+  customInput.focus();
+  renderCustomTags();
+  updateBasket();
+}
+
+function removeCustomItem(val) {
+  customItems = customItems.filter(x => x !== val);
+  renderCustomTags();
+  updateBasket();
+}
+
+function renderCustomTags() {
+  customTagsEl.innerHTML = "";
+  customItems.forEach(val => {
+    const tag = document.createElement("div");
+    tag.className = "custom-tag";
+    tag.innerHTML = `<span>✏️ ${val}</span><button class="custom-tag-remove" title="Remove">×</button>`;
+    tag.querySelector(".custom-tag-remove").addEventListener("click", () => removeCustomItem(val));
+    customTagsEl.appendChild(tag);
+  });
+}
+
+customAddBtn.addEventListener("click", addCustomItem);
+customInput.addEventListener("keydown", e => { if (e.key === "Enter") addCustomItem(); });
+
+renderFoods();
+
+// ── PWA SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
